@@ -1,42 +1,44 @@
 import passport from "passport";
 import passportLocal from "passport-local";
 import passportJWT from "passport-jwt";
+import { getRepository } from "typeorm";
+import { User } from "./entity/User.entity";
 
 const LocalStrategy = passportLocal.Strategy;
 
 interface UserInterface {
-  id: string;
+  // id: string;
   email: string;
   password: string;
 }
 
-class User {
-  private users: UserInterface[];
+// class User {
+//   private users: UserInterface[];
 
-  constructor(users: UserInterface[]) {
-    this.users = users;
-  }
+//   constructor(users: UserInterface[]) {
+//     this.users = users;
+//   }
 
-  findOne({ id, email, password }: UserInterface) {
-    const foundUser = this.users.find(item => item.email === email);
-    return Promise.resolve(foundUser);
-  }
+//   findOne({ id, email, password }: UserInterface) {
+//     const foundUser = this.users.find(item => item.email === email);
+//     return Promise.resolve(foundUser);
+//   }
 
-  findOneById(id: any) {
-    const found = this.users.find(item => item.id === id);
-    return Promise.resolve(found);
-  }
-}
+//   findOneById(id: any) {
+//     const found = this.users.find(item => item.id === id);
+//     return Promise.resolve(found);
+//   }
+// }
 
-const initUsers = [
-  {
-    id: "123456",
-    email: "kosty-krasava@mail.ru",
-    password: "123456"
-  }
-];
+// const initUsers = [
+//   {
+//     id: "123456",
+//     email: "kosty-krasava@mail.ru",
+//     password: "123456"
+//   }
+// ];
 
-const UserModel = new User(initUsers);
+// const UserModel = new User(initUsers);
 
 passport.use(
   new LocalStrategy(
@@ -44,14 +46,21 @@ passport.use(
       usernameField: "email",
       passwordField: "password"
     },
-    (email, password, cb) => {
+    async (email, password, cb) => {
       // this one is typically a DB call. Assume that the returned user object is pre-formatted and ready for storing in JWT
-      return UserModel.findOne({ id: "1213", email, password })
-        .then((user: UserInterface) => {
-          if (!user) {
+      const userRepository = getRepository(User);
+
+      return userRepository
+        .findOne({ where: { email, password } })
+        .then(({ id, email, password }) => {
+          if (!email || !password) {
             return cb(null, false, { message: "Incorrect email or password." });
           }
-          return cb(null, user, { message: "Logged In Successfully" });
+          return cb(
+            null,
+            { id, email, password },
+            { message: "Logged In Successfully" }
+          );
         })
         .catch((err: any) => cb(err));
     }
@@ -69,7 +78,9 @@ passport.use(
     },
     (jwtPayload, cb) => {
       // find the user in db if needed. This functionality may be omitted if you store everything you'll need in JWT payload.
-      return UserModel.findOneById(jwtPayload.id)
+      const userRepository = getRepository(User);
+      return userRepository
+        .findOne({ id: jwtPayload.id })
         .then((user: any) => {
           return cb(null, user);
         })

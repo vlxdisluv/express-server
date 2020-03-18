@@ -1,4 +1,4 @@
-import express, { Router } from "express";
+import { Router } from "express";
 import jwt from "jsonwebtoken";
 import passport from "passport";
 import { getRepository } from "typeorm";
@@ -31,7 +31,6 @@ router.post("/login", (req, res, next) => {
   })(req, res);
 });
 
-// router.post("/signup", async (req: express.Request, res, next) => {
 router.post("/register", async (req: { body: UserDto }, res, next) => {
   try {
     const { email, password } = req.body;
