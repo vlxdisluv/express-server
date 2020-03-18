@@ -62,7 +62,7 @@ router.post("/register", async (req: { body: UserDto }, res, next) => {
     }
 
     const createdUser = userRepository.save({ email, password });
-    res.json(createdUser);
+    res.json({ email, password });
   } catch (error) {
     next(error);
   }
